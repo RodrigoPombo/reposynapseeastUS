@@ -1,0 +1,316 @@
+{
+	"name": "GetModelFromAMLPorcupine",
+	"properties": {
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "aa",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "56g",
+			"driverCores": 8,
+			"executorMemory": "56g",
+			"executorCores": 8,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2",
+				"spark.autotune.trackingId": "63160da7-a867-4ccc-aec0-97e5f586c8d2"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"enableDebugMode": false,
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/fd75343a-2f47-43cd-bd82-c1ba01988d56/resourceGroups/pomboRG/providers/Microsoft.Synapse/workspaces/synapseeastuspombo/bigDataPools/aa",
+				"name": "aa",
+				"type": "Spark",
+				"endpoint": "https://synapseeastuspombo.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/aa",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "3.2",
+				"nodeCount": 10,
+				"cores": 8,
+				"memory": 56,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"experiment_name = \"TO_INPUT\""
+				],
+				"execution_count": null
+			},
+			{
+				"cell_type": "code",
+				"source": [
+					"import azureml.core\r\n",
+					"from azureml.core import Experiment, Workspace, Dataset, Datastore\r\n",
+					"from azureml.train.automl import AutoMLConfig\r\n",
+					"from notebookutils import mssparkutils\r\n",
+					"from azureml.data.dataset_factory import TabularDatasetFactory\r\n",
+					"\r\n",
+					"linkedService_name = \"AzureMLService2\"\r\n",
+					"\r\n",
+					"ws = mssparkutils.azureML.getWorkspace(linkedService_name)\r\n",
+					"experiment = Experiment(ws, experiment_name)"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"experiment"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"for i in experiment.get_runs():\r\n",
+					"    i.download_files()"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"from os.path import join as osjoin\r\n",
+					"from os import listdir\r\n",
+					"artifactlocation = str(experiment_name)+\"_artifact\"\r\n",
+					"datadir= osjoin(\".\",artifactlocation)\r\n",
+					"local_files = [ osjoin(datadir,f) for f in listdir(datadir) if \".onnx\" in f ]\r\n",
+					"local_files"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"spark.createDataFrame([artifactlocation], \"string\").toDF(\"age\").createOrReplaceTempView(\"mytemptable\")"
+				],
+				"execution_count": 33
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\r\n",
+					"select * from mytemptable"
+				],
+				"execution_count": 73
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "csharp"
+					}
+				},
+				"source": [
+					"%%csharp\r\n",
+					"DataFrame dataFrame = spark.Read().Table(\"mytemptable\");\r\n",
+					"string x = dataFrame.First().Values.GetValue(0).ToString();\r\n",
+					"x"
+				],
+				"execution_count": 81
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "csharp"
+					}
+				},
+				"source": [
+					"%%csharp\r\n",
+					"using System;\r\n",
+					"using System.IO;\r\n",
+					"string pathonnx = @\"./\" + x + \"/model.onnx\";\r\n",
+					"string pathtmp = @\"./\" + x + \"/outputcsharp1.tmp\"; \r\n",
+					"\r\n",
+					"//string path = @\"./pombosynapse1-tablenyc-20221124065701_artifact/model.onnx\";\r\n",
+					"//string path1 = @\"./pombosynapse1-tablenyc-20221124065701_artifact/outputcsharp1.tmp\";\r\n",
+					"\r\n",
+					"System.IO.StreamWriter objWriter;\r\n",
+					"// Calling the ReadAllBytes() function\r\n",
+					"byte[] readText = File.ReadAllBytes(pathonnx);\r\n",
+					"string s1;\r\n",
+					"\r\n",
+					"s1 = BitConverter.ToString(readText).Replace(\"-\",\"\");\r\n",
+					"objWriter = new System.IO.StreamWriter(pathtmp);\r\n",
+					"objWriter.WriteLine(s1);\r\n",
+					"objWriter.Close();"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"import azureml.core.datastore\r\n",
+					"from azureml.core import Dataset\r\n",
+					"datastore = azureml.core.datastore.Datastore.get(ws,\"datastoreadlsgen22\")"
+				],
+				"execution_count": 15
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"# upload-data.py\r\n",
+					"from azureml.core import Workspace\r\n",
+					"from azureml.core import Dataset\r\n",
+					"from azureml.data.datapath import DataPath\r\n",
+					"\r\n",
+					"Dataset.File.upload_directory(src_dir=artifactlocation, \r\n",
+					"                              target=DataPath(datastore, \"output/\"+artifactlocation)\r\n",
+					"                             )"
+				],
+				"execution_count": 17
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					}
+				},
+				"source": [
+					"mssparkutils.notebook.exit(artifactlocation)"
+				],
+				"execution_count": null
+			}
+		]
+	}
+}

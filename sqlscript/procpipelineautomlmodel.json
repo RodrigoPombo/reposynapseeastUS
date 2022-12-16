@@ -1,0 +1,17 @@
+{
+	"name": "procpipelineautomlmodel",
+	"properties": {
+		"content": {
+			"query": "\n\n\n--\ndrop PROCEDURE procedureToGetNewModel;\nCREATE PROCEDURE procedureToGetNewModel @artifactlocation VARCHAR(max)\nAS\nCREATE TABLE #temp ( [model] [varbinary](max) ) WITH ( DISTRIBUTION = ROUND_ROBIN, HEAP );\nDECLARE @pathVar AS VARCHAR(max), @copyStmt as VARCHAR(max);\n\nset @pathVar = '''' +'https://pomboadlsgen22.dfs.core.windows.net/blobtest/output/' + @artifactlocation + '/outputcsharp1.tmp' + '''';\nset @copyStmt = 'COPY INTO #temp ( model ) FROM ' + @pathVar + ' WITH ( FILE_TYPE = ''CSV'' )';\n\nPRINT @copyStmt\nexec(@copyStmt);\n\ntruncate table tabletokeepmodel;\nINSERT INTO tabletokeepmodel ( [ID], [name], [description], [version], [created_time], [created_by], [framework], [model], [inputs_schema], [outputs_schema] ) SELECT 'pombosynapse1-tablenyc-20221124065701-Best:1', 'pombosynapse1-tablenyc-20221124065701-Best', NULL, 1, GETDATE(), 'c93b4133-9a61-49ec-b389-25fc5f0e047d', 'Custom', t.model, '[{\"name\": \"fareAmount\", \"type\": \"float\"}, {\"name\": \"paymentType\", \"type\": \"long\"}, {\"name\": \"passengerCount\", \"type\": \"long\"}, {\"name\": \"tripDistance\", \"type\": \"float\"}, {\"name\": \"tripTimeSecs\", \"type\": \"long\"}, {\"name\": \"pickupTimeBin\", \"type\": \"string\"}]', '[{\"name\": \"label\", \"type\": \"long\"}, {\"name\": \"probabilities\", \"type\": \"float\"}]' FROM #temp t;\nGO\n\n\nEXEC procedureToGetNewModel 'pombosynapse1-tablenyc-20221124065701_artifact'\n--\n\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"databaseName": "master",
+				"poolName": "Built-in"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
