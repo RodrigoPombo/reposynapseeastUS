@@ -68,10 +68,6 @@
 						}
 					},
 					"snapshot": true,
-					"sparkPool": {
-						"referenceName": "sparkpool",
-						"type": "BigDataPoolReference"
-					},
 					"executorSize": "Small",
 					"conf": {
 						"spark.dynamicAllocation.enabled": null,
@@ -102,7 +98,7 @@
 				},
 				"userProperties": [],
 				"sqlPool": {
-					"referenceName": "mypool",
+					"referenceName": "aa",
 					"type": "SqlPoolReference"
 				},
 				"typeProperties": {
